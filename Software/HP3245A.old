@@ -1,0 +1,97 @@
+import pyvisa
+import time
+
+class HP3245A:
+    def __init__(self, resource_name, verbose=True):
+        self.resource_name = resource_name
+        self.verbose = verbose
+        self.rm = pyvisa.ResourceManager()
+        self.instrument = None
+
+    def __enter__(self):
+        try:
+            self.instrument = self.rm.open_resource(self.resource_name)
+            self.instrument.read_termination = '\n'
+            self.instrument.write_termination = '\n'
+            if self.verbose:
+                idn = self.instrument.query("ID?")
+                print(f"[INFO] Conectado exitosamente a: {idn}")
+            return self
+        except Exception as e:
+            print(f"[ERROR] No se pudo abrir el recurso {self.resource_name}: {e}")
+            raise
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            if self.instrument:
+                self.instrument.close()
+                if self.verbose:
+                    print("[INFO] Conexión cerrada correctamente.")
+        except Exception as e:
+            print(f"[ERROR] Al cerrar el instrumento: {e}")
+
+    def configurar_generador(self, resistencia_ohm, capacitor_uF, ciclos=7, tau_por_ciclo_on=8):
+        try:
+            # Cálculos eléctricos
+            tau = (capacitor_uF / 1e6) * resistencia_ohm
+            periodo = tau_por_ciclo_on * 2 * tau
+            frecuencia = round(1 / periodo, 2)
+            sweep_time_us = round((periodo * ciclos / 10000) * 1e6, 0)
+
+            if sweep_time_us < 20:
+                sweep_time_us = 20
+                ciclos = 0.2 / (tau * 2 * tau_por_ciclo_on)
+                print(f"[ADVERTENCIA] Sweep time mínimo alcanzado. Ciclos ajustados a: {ciclos:.2f}")
+            else:
+                print(f"[INFO] Ciclos por muestra: {ciclos}")
+
+            if self.verbose:
+                print(f"[INFO] Tau por ciclo on: {tau_por_ciclo_on}")
+                print(f"[INFO] Frecuencia recomendada: {frecuencia} Hz")
+                print(f"[INFO] Sweep time recomendado: {sweep_time_us} µs")
+
+            # Parámetros señal
+            vpp_cha, offset_cha = 1, 0.5
+            vpp_chb, offset_chb = 5, 2.5
+
+            # Configuración del generador
+            self.instrument.write("RESET")
+            self.instrument.write("CLR")
+            self.instrument.write("SCRATCH")
+            self.instrument.write("BEEP OFF")
+
+            # Canal A
+            self.instrument.write("USE CHANA")
+            self.instrument.write(f"FREQ {frecuencia}")
+            self.instrument.write(f"DCOFF {offset_cha}")
+            self.instrument.write(f"APPLY SQV {vpp_cha}")
+
+            # Canal B
+            self.instrument.write("USE CHANB")
+            self.instrument.write(f"FREQ {frecuencia}")
+            self.instrument.write(f"DCOFF {offset_chb}")
+            self.instrument.write(f"APPLY SQV {vpp_chb}")
+
+            # Sincronizar canales
+            self.instrument.write("PHSYNC")
+
+            print(f"[INFO] CHA configurado: {vpp_cha} Vpp, {frecuencia} Hz, Offset {offset_cha} V")
+            print(f"[INFO] CHB configurado: {vpp_chb} Vpp, {frecuencia} Hz, Offset {offset_chb} V")
+
+        except Exception as e:
+            print(f"[ERROR] Fallo en la configuración del generador: {e}")
+            try:
+                self.instrument.write("APPLY DCV 0.0")
+            except:
+                pass
+            raise
+'''     
+with HP3245A("GPIB0::9::INSTR") as gen:
+    gen.configurar_generador(
+        resistencia_ohm=100,
+        capacitor_uF=207,
+        ciclos=7,
+        tau_por_ciclo_on=8
+    )
+''' 
+    
