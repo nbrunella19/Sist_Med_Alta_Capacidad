@@ -10,12 +10,14 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 from scipy.stats import linregress
 from pathlib import Path
+import json
 
 #############################################################################################
 Extremo_de_ventana_inf = 0.3
 Extremo_de_ventana_sup = 0.7
 R_Cuadrado = 0.999
 Indice     = 0
+Cant_Muestras = 10000
 #############################################################################################
 Array_Generador  = ["HP3245A","HPXXXX"]
 Array_Multimetro = ["HP3458A","HPXXXX"]
@@ -46,11 +48,87 @@ def Mostrar_Menu():
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def Menu_Inicial():
+    
+    print("\n--- Modo de aplicación ---\n") 
+    print("1. Medir y calibrar")
+    print("2. Calcular desde una medición ya existente")
+    while True:
+            
+            opcion = input("Introducir Set (1 o 2):\n")
+            if opcion != "1" and opcion != "2":
+                limpiar_pantalla()
+                print("\n--- Modo de aplicación ---\n") 
+                print("1. Medir y calibrar")
+                print("2. Calcular desde una medición ya existente")
+                    
+            else:
+                break
+        
+    return opcion   
+
+def Ruta_de_analisis_existente():
+    # --- pedir y validar ruta del generador ---
+    limpiar_pantalla()
+    while True:
+        ruta_generador_str = input("Introducir la ruta de archivo de medición de generador:\n")
+        ruta_generador = Path(ruta_generador_str)
+        if ruta_generador.exists():
+            ruta_generador = ruta_generador.resolve()  # normalizar ruta absoluta
+            break
+        print("⚠️ La ruta no existe o está mal escrita. Intente de nuevo.\n")
+
+    # --- pedir y validar ruta de la curva de carga ---
+    while True:
+        ruta_curva_carga_str = input("Introducir la ruta de archivo de medición de curva de carga:\n")
+        ruta_curva_carga = Path(ruta_curva_carga_str)
+        if ruta_curva_carga.exists():
+            ruta_curva_carga = ruta_curva_carga.resolve()
+            break
+        print("⚠️ La ruta no existe o está mal escrita. Intente de nuevo.\n")
+
+    # --- obtener nombres de archivo ---
+    nombre_archivo_generador = ruta_generador.name  # solo el nombre con extensión
+    nombre_archivo_curva = ruta_curva_carga.name
+
+    return (str(ruta_generador), str(ruta_curva_carga),
+            nombre_archivo_generador, nombre_archivo_curva)
+
+def Ruta_de_analisis_nuevo():
+    # Base de ejecución
+    base_path = Path(__file__).parent
+
+    # Timestamp para nombre del archivo
+    fecha_actual = datetime.datetime.now()
+    nombre_archivo = fecha_actual.strftime("Medicion_%Y-%m-%d_%H-%M-%S.txt")
+
+    # Carpetas
+    carpeta_mediciones = base_path / "Mediciones" 
+
+    Carpeta_Mediciones_Generador  = carpeta_mediciones / "Generador_1"
+    Carpeta_Mediciones_Carga      = carpeta_mediciones / "Capacitor_1" 
+
+    # Crear carpetas necesarias
+    carpeta_mediciones.mkdir(parents=True, exist_ok=True)
+
+    Carpeta_Mediciones_Generador.mkdir(parents=True, exist_ok=True)
+    Carpeta_Mediciones_Carga.mkdir(parents=True, exist_ok=True)
+
+
+    # Ruta final del archivo .txt
+    ruta_medicion_generador = Carpeta_Mediciones_Generador / nombre_archivo
+    ruta_medicion_CargayDescarga = Carpeta_Mediciones_Carga / nombre_archivo
+ 
+    return str(ruta_medicion_generador), str(ruta_medicion_CargayDescarga)
+
+
+
 def Menu_Instrumental():
     
     print("\n Seleccionar Set de medición \n")
     print("1. INTI")
     print("2. FRH")
+    
     
     while True:
         
@@ -103,6 +181,7 @@ def Calculo_Ciclos(Cx,Rp,Ciclos,tau_por_ciclo,Cant_Muestras):
     return tau,frec_recomendada,sweep_time   
 
 
+
 def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
     print("\n--- Resumen de configuración ---\n") 
     print(f"Se utilizará el set de medición: {Modo}")
@@ -111,14 +190,12 @@ def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
     print(f"El tau esperado es de: {Vn_Tau} segundos")
     print("\n--- ------------------------- ---\n") 
     print(f"Se aplicará una señal cuadrada de valor tensión pico 1 V, montada sobre una contínua de 0.5 V y frecuencia de: {Frec} Hz \n")
-
-    
+  
     while True:
         entrada = input("Para continuar presione 1. Para volver a iniciar presione r\n")
         
         if   entrada  == "1":
-                #opcion = "INICIALIZACION"
-                opcion = "FINALIZACION"
+                opcion = "INICIALIZACION"
                 break                  
         elif entrada  == "r":
                 opcion  = "CONFIGURACION"
@@ -128,16 +205,36 @@ def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
             print("Ingreso incorrecto")
     
     return opcion
+###################################################################################################################
 
-#############################################################################################
+def Configuracion():
+        
+    limpiar_pantalla()
+        
+    Modo = Menu_Instrumental()
+        
+    limpiar_pantalla()
+        
+    #Configura parámetros de medición en función de los vallores ingresados
+    Vn_Cx, Vn_Rp, Ciclos, Tau_x_ciclo = Menu_Config()         
+        
+    limpiar_pantalla()
+                        
+    Vn_Tau, Frec, Sweep_time = Calculo_Ciclos(Vn_Cx,Vn_Rp,Ciclos,Tau_x_ciclo, Cant_Muestras)              
+        
+    limpiar_pantalla()
+        
+    return Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time    
+
+###################################################################################################################
 
 def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp):
 
     # Inicializa vectores de resultados
     Muestras_Filtradas   = []
     Muestras_Validas     = []
-    muestrasdeinicio    = []  # Almacenará los números de muestra del inicio de carga
-    muestrasdefin       = []  # Almacenará los números de muestra del final de carga
+    muestrasdeinicio     = []  # Almacenará los números de muestra del inicio de carga
+    muestrasdefin        = []  # Almacenará los números de muestra del final de carga
     Numero_de_Muestras_Filtradas =[]
     V_offset            =  0.0
     
@@ -210,7 +307,7 @@ def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp):
 
         # Calcular la pendiente de la curva linealizada usando una regresión lineal
         slope, intercept, r_value, p_value, std_err= linregress(Muestras_Filtradas_aux['Tiempo'], Muestras_de_Ciclo_Lin[Indice])
-        if (r_value)**2 >R_Cuadrado:
+        if (r_value)**2 > R_Cuadrado:
             # Modificar el 0.999 a una variable de entrada modificable      
             slope_vector.append(slope)  
             intercept_vector.append(intercept)
@@ -272,4 +369,24 @@ def Guardar_Medicion(Ruta_Guardado,Medicion_Realizada):
             for dato in Medicion_Realizada:
                 file.write(f"{dato}\n")  
 #########################################################################################################
-
+def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada, 
+                     Vn_Cx=None, Vn_Rp=None, Vn_Tau=None, Frec=None, Sweep_time=None):
+    # Guardar los datos de la medición en un archivo de texto
+    with open(Ruta_Guardado, "w") as file:         
+        for dato in Medicion_Realizada:
+            file.write(f"{dato}\n")  
+    
+    # Si se pasaron los parámetros, guardarlos en un archivo JSON
+    if None not in (Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time):
+        parametros = {
+            "Vn_Cx": Vn_Cx,
+            "Vn_Rp": Vn_Rp,
+            "Vn_Tau": Vn_Tau,
+            "Frec": Frec,
+            "Sweep_time": Sweep_time
+        }
+        
+        ruta_json = Path(Ruta_Guardado).with_suffix(".json")
+        with open(ruta_json, "w") as json_file:
+            json.dump(parametros, json_file, indent=4)
+#########################################################################################################
