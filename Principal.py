@@ -39,7 +39,7 @@ while True:
         set_u  = Funciones_Archivos.Menu_Instrumental()
         
         if modo_u == "1":
-            ruta_medicion_generador, ruta_medicion_CargayDescarga = Funciones_Archivos.Ruta_de_analisis_nuevo()
+            ruta_medicion_generador, ruta_medicion_CargayDescarga, ruta_archivo_config = Funciones_Archivos.Ruta_de_analisis_nuevo()
             Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time = Funciones_Archivos.Configuracion()
             estado_actual = "INICIALIZACION"
         
@@ -99,7 +99,7 @@ while True:
         
         Funciones_Archivos.limpiar_pantalla()
         # Cargar datos en arrays
-        Medicion_Generador = np.loadtxt(ruta_medicion_generador)  # ajustá delimiter si hace falta
+        Medicion_Generador = np.loadtxt(ruta_medicion_generador)            # ajusta delimiter si hace falta
         Medicion_Capacitor = np.loadtxt(ruta_medicion_CargayDescarga)
         
 
@@ -116,7 +116,7 @@ while True:
         Funciones_Archivos.limpiar_pantalla()
         V_max, Gen_std = Funciones_Medicion.analizar_senal_cuadrada(Medicion_Generador)
         Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig =Funciones_Medicion.Procesamiento_CargayDescarga(ruta_medicion_CargayDescarga,Medicion_Capacitor,V_max,Sweep_time,Vn_Rp)
-        Funciones_Medicion.Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp,Medicion_Generador,Medicion_Capacitor)
+        Funciones_Medicion.Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga)
         input("Presionar Enter para continuar") 
         Funciones_Archivos.limpiar_pantalla()
         estado_actual = "FINALIZACION"

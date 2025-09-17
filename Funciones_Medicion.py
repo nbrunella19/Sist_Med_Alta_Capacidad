@@ -15,7 +15,7 @@ Extremo_de_ventana_sup = 0.7
 R_Cuadrado = 0.999
 Cant_Muestras = 10000
 
-#############################################################################################
+###############################################################################################
 # Datos de DVM HP3458 
 HP3458_Accuracy_T   = 1e-4
 HP3458_Offset_T     = 5e-9
@@ -27,7 +27,7 @@ HP3458_Gain_error_V = 60e-6         # pag 99 sampling with ...
 HP3458_Resolution_V = 1/200000      #pag 51 // 5 dig y medio // Synthesys and Sampling
 
 ################################################################################################
-###################################Valores de Cables############################################
+################################## Valores de Cables ###########################################
 Rcablegenerador1= 54e-3
 Rcablegenerador2=31.152e6
 Rcablemultimetro1=34e-3
@@ -94,9 +94,9 @@ def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp):
     muestrasdeinicio = muestrasdeinicio[:Cantidad_ciclos]
     muestrasdefin    = muestrasdefin[:Cantidad_ciclos]
 
-    Muestras_de_Ciclo     =[0]*Cantidad_ciclos 
-    Muestras_de_Ciclo_Lin =[0]*Cantidad_ciclos 
-    Num_Muestras_de_Ciclo =[0]*Cantidad_ciclos 
+    Muestras_de_Ciclo        =[0]*Cantidad_ciclos 
+    Muestras_de_Ciclo_Lin    =[0]*Cantidad_ciclos 
+    Num_Muestras_de_Ciclo    =[0]*Cantidad_ciclos 
     Tiempo_Muestras_de_Ciclo =[0]*Cantidad_ciclos
 
     Mediciones_leidas = pd.read_csv(Ruta, header=None, names=['Tensión'], sep='\s+', skiprows=13)
@@ -180,7 +180,7 @@ def analizar_senal_cuadrada(signal: np.ndarray, umbral: float = 0.01):
 
 #########################################################################################################
 
-def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp,Medicion_Generador,Medicion_Capacitor):
+def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp,Archivo_generador,Archivo__CargayDescarga):
 
     slope_promedio     = np.mean(slope_vector)
     slope_desv_est     = np.std(slope_vector)
@@ -208,9 +208,10 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
 
     # Incertidumbre medida de resistencia de referencia con multimetro en ohm 
     uRp        = 12e-6*Vn_Rp 
-
-
+    
+    # Razón de tensiones
     gamma= V_dig/V_max
+    
     # Coeficientes de sensibilidad del modelo tau=-t/ln(1-Vdig/Vm)
     dtau_dt     = 1/np.log(1-V_dig/V_max)
     dtau_dgamma = tau_promedio/(np.square(np.log(1-gamma)))*(1-gamma)
@@ -244,8 +245,8 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
 
     uc_porcentual= uc*100/Vn_Cx
 
-    print(f"Archivo de Medición del Generador       :\n {Medicion_Generador}\n")
-    print(f"Archivo de Medición del Multímetro      :\n {Medicion_Capacitor}\n")
+    print(f"Archivo de Medición del Generador       :\n {Archivo_generador}\n")
+    print(f"Archivo de Medición del Multímetro      :\n {Archivo__CargayDescarga}\n")
     print(f"Valor de resistencia nominal del patrón (Rp)      : {round(Vn_Rp,4)} ohm")
     print(f"Capacidad promedio (Cx)      : {round(Cx_promedio*1e6,6)} uF")
     print(f"Incertidumbre combinada      : {round(uc,7)} uF")

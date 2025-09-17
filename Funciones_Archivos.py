@@ -31,7 +31,7 @@ def Menu_Inicial():
     print("2. Calcular desde una medición ya existente")
     while True:
             
-            opcion = input("Introducir Set (1 o 2):\n")
+            opcion = input("Introducir modo (1 o 2):\n")
             if opcion != "1" and opcion != "2":
                 limpiar_pantalla()
                 print("--- Modo de aplicación ---\n") 
@@ -117,25 +117,31 @@ def Ruta_de_analisis_nuevo():
     # Timestamp para nombre del archivo
     fecha_actual = datetime.datetime.now()
     nombre_archivo = fecha_actual.strftime("Medicion_%Y-%m-%d_%H-%M-%S.txt")
+    nombre_archivo_config = fecha_actual.strftime("Medicion_%Y-%m-%d_%H-%M-%S.json")
 
     # Carpetas
     carpeta_mediciones = base_path / "Mediciones" 
 
     Carpeta_Mediciones_Generador  = carpeta_mediciones / "Generador_1"
     Carpeta_Mediciones_Carga      = carpeta_mediciones / "Capacitor_1" 
+    Carpeta_Mediciones_Config     = carpeta_mediciones / "Config" 
 
     # Crear carpetas necesarias
     carpeta_mediciones.mkdir(parents=True, exist_ok=True)
 
     Carpeta_Mediciones_Generador.mkdir(parents=True, exist_ok=True)
     Carpeta_Mediciones_Carga.mkdir(parents=True, exist_ok=True)
+    Carpeta_Mediciones_Config.mkdir(parents=True, exist_ok=True)
 
 
-    # Ruta final del archivo .txt
+    # Ruta final del archivo de Medición
     ruta_medicion_generador = Carpeta_Mediciones_Generador / nombre_archivo
-    ruta_medicion_CargayDescarga = Carpeta_Mediciones_Carga / nombre_archivo
+    ruta_medicion_CargayDescarga = Carpeta_Mediciones_Carga / nombre_archivo_config
+
+    # Ruta final del archivo de Configuración
+    ruta_medicion_Config = Carpeta_Mediciones_Config / nombre_archivo
  
-    return str(ruta_medicion_generador), str(ruta_medicion_CargayDescarga)
+    return str(ruta_medicion_generador), str(ruta_medicion_CargayDescarga), str(ruta_medicion_Config)
 
 #####################################################################################################################
 
