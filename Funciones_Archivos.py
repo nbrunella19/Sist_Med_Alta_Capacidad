@@ -1,5 +1,6 @@
 ################################################## LIBRERIAS #########################################################
 import os
+import sys 
 import json
 import datetime
 import numpy as np
@@ -271,3 +272,18 @@ def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada,
         with open(ruta_json, "w") as json_file:
             json.dump(parametros, json_file, indent=4)
 ###################################################################################################################
+
+def Menu_Final():
+    
+    limpiar_pantalla()
+    print("La calibración ha finalizado.")
+    while True: 
+            select_final = input("\nPresionar 1 para volver al menú principal o 2 para cerrar: ")  
+            limpiar_pantalla() 
+            if select_final == "1":
+                return "INICIO"
+            elif select_final == "2":
+                sys.exit()   
+            else:
+                limpiar_pantalla()
+                print("Elección incorrecta.")
