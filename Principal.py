@@ -12,12 +12,12 @@ from Instrumental.HP3245A import HP3245A
 ########################################################################################################################################################
 ######################################################################################################################################################## 
 
-#estado_actual  = "INICIO"
 
-estado_actual  = "FINALIZACION"
+estado_actual  = "INICIO"
 Cant_Muestras  = 10000
 Aper_Time      = 3e-6
 
+Rcablegenerador  = 88e-3
 ########################################################################################################################################################
 ######################################################################################################################################################## 
 
@@ -125,8 +125,14 @@ while True:
         
         Funciones_Archivos.limpiar_pantalla()
         V_max, Gen_std = Funciones_Medicion.analizar_senal_cuadrada(Medicion_Generador)
-        Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig =Funciones_Medicion.Procesamiento_CargayDescarga(ruta_medicion_CargayDescarga,Medicion_Capacitor,V_max,Sweep_time,Vn_Rp)
-        Funciones_Medicion.Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga)
+        
+        Cx_vector,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig =Funciones_Medicion.Procesamiento_CargayDescarga(ruta_medicion_CargayDescarga,Medicion_Capacitor,V_max,Sweep_time,Vn_Rp,Rcablegenerador)
+        
+        Cx         = Funciones_Medicion.Calculo_Valor_Medio(Cx_vector)
+        ucx, ucxp  = Funciones_Medicion.Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp)
+        
+        Funciones_Medicion.Mostrar_Resultados(Cx,ucx, ucxp, Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga)
+        
         input("Presionar Enter para continuar") 
         Funciones_Archivos.limpiar_pantalla()
         estado_actual = "FINALIZACION"

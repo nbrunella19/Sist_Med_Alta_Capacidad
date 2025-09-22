@@ -26,13 +26,15 @@ HP3458_Offset_V     = 1e-6
 HP3458_Gain_error_V = 60e-6         # pag 99 sampling with ...
 HP3458_Resolution_V = 1/200000      #pag 51 // 5 dig y medio // Synthesys and Sampling
 
-################################################################################################
+
 ################################## Valores de Cables ###########################################
-Rcablegenerador1= 54e-3
-Rcablegenerador2=31.152e6
-Rcablemultimetro1=34e-3
-Rcablemultimetro2=4.2e6
-RDVM=10e9+5e3+5e3
+
+Rcablegenerador1  = 54e-3
+Rcablegenerador2  = 31.152e6
+Rcablemultimetro1 = 34e-3
+Rcablemultimetro2 = 4.2e6
+RDVM              = 10e9+5e3+5e3
+
 ##################################  FUNCIONES GENERALES  ########################################
 
 def Calculo_Ciclos(Cx,Rp,Ciclos,tau_por_ciclo,Cant_Muestras):
@@ -41,10 +43,47 @@ def Calculo_Ciclos(Cx,Rp,Ciclos,tau_por_ciclo,Cant_Muestras):
     frec_recomendada   = str(round((1/periodo),1))
     sweep_time         = periodo*Ciclos/Cant_Muestras
     return tau,frec_recomendada,sweep_time   
+#########################################################################################################
+
+def analizar_senal_cuadrada(signal: np.ndarray, umbral: float = 0.01):
+    """
+    Analiza una señal cuadrada para obtener los valores promedio y desviación estándar de Von y Voff.
+    """
+# Estimar niveles
+    v_max = np.max(signal)
+    v_min = np.min(signal)
+    amplitud = v_max - v_min
+
+    # Estimar umbrales
+    umbral_superior = v_max - umbral * amplitud
+    umbral_inferior = v_min + umbral * amplitud
+
+    # Clasificar valores
+    von_values = signal[signal >= umbral_superior]
+    voff_values = signal[signal <= umbral_inferior]
+
+    # Calcular estadísticas
+    von_mean = np.mean(von_values)
+    von_std = np.std(von_values)
+
+    voff_mean = np.mean(voff_values)
+    voff_std = np.std(voff_values)
+
+    V_max = von_mean - voff_mean
+
+    
+    if von_std>voff_std:
+        Gen_std=von_std
+    else:
+        Gen_std=voff_std
+        
+    return  V_max, Gen_std
 ################################################################################################
 
-def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp):
-
+def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablegenerador):
+    """
+    Procesa los datos de medición de un capacitor para calcular su valor y otros parámetros relacionados
+    """
     # Inicializa vectores de resultados
     Muestras_Filtradas   = []
     Muestras_Validas     = []
@@ -138,67 +177,29 @@ def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp):
 
     Cx=[0]*Cantidad_ciclos_validos
     for i in range(Cantidad_ciclos_validos):
-        Cx[i] = (-1 / float((slope_vector[i]) * float(Rp)))
+        Cx[i] = (-1 / float((slope_vector[i]) * float(Rp+Rcablegenerador)))
 
     return Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig
+##################################################################################################################################################################
 
-#########################################################################################################
 
-def analizar_senal_cuadrada(signal: np.ndarray, umbral: float = 0.01):
-    """
-    Analiza una señal cuadrada para obtener los valores promedio y desviación estándar de Von y Voff.
-    """
-# Estimar niveles
-    v_max = np.max(signal)
-    v_min = np.min(signal)
-    amplitud = v_max - v_min
+##################################################################################################################################################################
+def Calculo_Valor_Medio(Cx_vector):
+    Cx_promedio        = np.mean(Cx_vector)
+    return Cx_promedio
 
-    # Estimar umbrales
-    umbral_superior = v_max - umbral * amplitud
-    umbral_inferior = v_min + umbral * amplitud
+##################################################################################################################################################################
 
-    # Clasificar valores
-    von_values = signal[signal >= umbral_superior]
-    voff_values = signal[signal <= umbral_inferior]
-
-    # Calcular estadísticas
-    von_mean = np.mean(von_values)
-    von_std = np.std(von_values)
-
-    voff_mean = np.mean(voff_values)
-    voff_std = np.std(voff_values)
-
-    V_max = von_mean - voff_mean
-
-    
-    if von_std>voff_std:
-        Gen_std=von_std
-    else:
-        Gen_std=voff_std
-        
-    return  V_max, Gen_std
-
-#########################################################################################################
-
-def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp,Archivo_generador,Archivo__CargayDescarga):
+def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp):
 
     slope_promedio     = np.mean(slope_vector)
     slope_desv_est     = np.std(slope_vector)
     intercept_promedio = np.mean(intercept_vector)
     std_err_promedio   = np.mean(std_err_vector)
     tau_promedio       = -1 / slope_promedio
-    Cx_promedio        = np.mean(Cx)
-    Cx_desv_est        = np.std(Cx)
     error_C            = std_err_promedio/ ((slope_promedio**2) * Vn_Rp) 
-    r2                 = np.mean(r_value_vector) ** 2
-
-
-    df = Cantidad_de_muestras - 2    # Grados de libertad
-    # Valor crítico t para el intervalo de confianza del 95%
-    t_critical = stats.t.ppf(0.975, df)
-    # Incertidumbre de la pendiente (intervalo de confianza)
-    uncertainty_slope = t_critical * std_err_promedio
-
+    
+    # Incertidumbre tipo B (división entre sqrt(3) para distribución rectangular)
     factor_r    =1/np.sqrt(3)
     factor_g =  2
 
@@ -227,13 +228,12 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
         (HP3458_Gain_error_V*V_dig / factor_g)**2 + 
         (HP3458_Resolution_V*V_dig / factor_r)**2 
     ) 
-
-    
+  
     uVM  = np.sqrt(
         (HP3458_Accuracy_V*V_max/factor_r)**2 + (HP3458_Offset_V/factor_r)**2 +  (HP3458_Gain_error_V*V_max /factor_g)**2 + (HP3458_Resolution_V*V_max  /factor_r)**2 )
         
-
     ugamma= np.sqrt((dgamma_dVDIG*uVDIG)**2 +dgamma_dVM*uVM**2)
+    
     # Incertidumbre tipo a obtenida de función de linealización
     utau_A     = slope_desv_est/((slope_promedio**2)*(Cantidad_ciclos)**(1/2))   
 
@@ -245,11 +245,18 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
 
     uc_porcentual= uc*100/Vn_Cx
 
-    print(f"Archivo de Medición del Generador       :\n {Archivo_generador}\n")
-    print(f"Archivo de Medición del Multímetro      :\n {Archivo__CargayDescarga}\n")
+    return  uc, uc_porcentual
+
+
+##################################################################################################################################################################
+
+##################################################################################################################################################################
+def Mostrar_Resultados(Cx_promedio,uc,uc_porcentual,Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga):
+    print(f"Archivo de Medición del Generador  :\n {ruta_medicion_generador}\n")
+    print(f"Archivo de Medición del Multímetro :\n {ruta_medicion_CargayDescarga}\n")
     print(f"Valor de resistencia nominal del patrón (Rp)      : {round(Vn_Rp,4)} ohm")
     print(f"Capacidad promedio (Cx)      : {round(Cx_promedio*1e6,6)} uF")
     print(f"Incertidumbre combinada      : {round(uc,7)} uF")
     print(f"Incertidumbre combinada en % : {round(uc_porcentual,5)} %")
 
-    ############################################################################################
+ ############################################################################################
