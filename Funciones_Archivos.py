@@ -3,6 +3,7 @@ import os
 import sys 
 import json
 import datetime
+from time import sleep
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,6 +24,13 @@ def Mostrar_Menu():
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+
+def limpiar_teclado():
+    try:
+        import termios
+        termios.tcflush(sys.stdin, termios.TCIFLUSH)
+    except:
+        pass  # en Windows no existe termios
 #####################################################################################################################
 
 def Menu_Inicial():
@@ -32,7 +40,7 @@ def Menu_Inicial():
     print("2. Calcular desde una medición ya existente")
     while True:
             
-            opcion = input("Introducir modo (1 o 2):\n")
+            opcion = input("Introducir modo (1 o 2):")
             if opcion != "1" and opcion != "2":
                 limpiar_pantalla()
                 print("--- Modo de aplicación ---\n") 
@@ -145,30 +153,34 @@ def Ruta_de_analisis_nuevo():
     return str(ruta_medicion_generador), str(ruta_medicion_CargayDescarga), str(ruta_medicion_Config)
 
 #####################################################################################################################
-
 def Menu_Instrumental():
     
-    print("\n Seleccionar Set de medición \n")
+    print("Seleccionar Set de medición \n")
     print("1. INTI")
     print("2. FRH")
     
     while True:
-        
-        opcion_generador = input("Introducir Set (1 o 2):\n")
+        limpiar_teclado()
+        sleep(0.2)
+        limpiar_teclado()
+        opcion_generador = input("Introducir Set (1 o 2):").strip()
+        sleep(5)  # Pequeña pausa para evitar problemas de buffer
+        print(f"Opción seleccionada: {opcion_generador}")  # Depuración
+
         
         if opcion_generador == "1":
-                    opcion = "Set INTI"
-                    break
-                   
+            opcion = "Set INTI"
+            break
         elif opcion_generador == "2":
-                    opcion = "Set FRH"
-                    break     
+            opcion = "Set FRH"
+            break  
+        
         else:
-            limpiar_pantalla()
-            print("\n Seleccionar Set de medición \n")
+            #limpiar_pantalla()
+            print("Seleccionar Set de medición")
             print("1. INTI")
             print("2. FRH")
-    
+        
     return opcion   
 #####################################################################################################################
 
@@ -209,7 +221,7 @@ def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
     print(f"Se aplicará una señal cuadrada de valor tensión pico 1 V, montada sobre una contínua de 0.5 V y frecuencia de: {Frec} Hz \n")
   
     while True:
-        entrada = input("Para continuar presione 1. Para volver a iniciar presione r\n")
+        entrada = input("Para continuar presione 1. Para volver a iniciar presione r")
         
         if   entrada  == "1":
                 opcion = "INICIALIZACION"

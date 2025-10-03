@@ -208,7 +208,7 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
     dC_dRp  = tau_promedio/Vn_Rp**2  
 
     # Incertidumbre medida de resistencia de referencia con multimetro en ohm 
-    uRp        = 12e-6*Vn_Rp 
+    uRp        = 12e-6* Vn_Rp 
     
     # Razón de tensiones
     gamma= V_dig/V_max
@@ -251,6 +251,7 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
 ##################################################################################################################################################################
 
 ##################################################################################################################################################################
+
 def Mostrar_Resultados(Cx_promedio,uc,uc_porcentual,Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga):
     print(f"Archivo de Medición del Generador  :\n {ruta_medicion_generador}\n")
     print(f"Archivo de Medición del Multímetro :\n {ruta_medicion_CargayDescarga}\n")
@@ -259,4 +260,4 @@ def Mostrar_Resultados(Cx_promedio,uc,uc_porcentual,Vn_Rp,ruta_medicion_generado
     print(f"Incertidumbre combinada      : {round(uc,7)} uF")
     print(f"Incertidumbre combinada en % : {round(uc_porcentual,5)} %")
 
- ############################################################################################
+##################################################################################################################################################################

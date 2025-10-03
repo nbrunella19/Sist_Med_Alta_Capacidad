@@ -37,24 +37,29 @@ class HP3245A:
                 print(f"[INFO] Frecuencia recomendada: {Frec} Hz")
                 print(f"[INFO] Sweep time recomendado: {Sweep_Time} µs")
 
+        # Parámetros de configuración
         vpp_cha, offset_cha = 1, 0.5
         vpp_chb, offset_chb = 5, 2.5
 
+        # Resetea el instrumento y desactiva el beep
         self.instrument.write("RESET")
         self.instrument.write("CLR")
         self.instrument.write("SCRATCH")
         self.instrument.write("BEEP OFF")
 
+        # Configura canal A
         self.instrument.write("USE CHANA")
         self.instrument.write(f"FREQ {Frec}")
         self.instrument.write(f"DCOFF {offset_cha}")
         self.instrument.write(f"APPLY SQV {vpp_cha}")
 
+        # Configura canal B
         self.instrument.write("USE CHANB")
         self.instrument.write(f"FREQ {Frec}")
         self.instrument.write(f"DCOFF {offset_chb}")
         self.instrument.write(f"APPLY SQV {vpp_chb}")
 
+        # Sincroniza ambos canales
         self.instrument.write("PHSYNC")
 
         print(f"[INFO] CHA configurado: {vpp_cha} Vpp, {Frec} Hz, Offset {offset_cha} V")

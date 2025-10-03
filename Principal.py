@@ -40,24 +40,34 @@ while True:
     elif estado_actual == "MODO_USO":
     
         Funciones_Archivos.limpiar_pantalla()
+        Funciones_Archivos.limpiar_teclado()
         modo_u = Funciones_Archivos.Menu_Inicial()
-        Funciones_Archivos.limpiar_pantalla()
-        set_u  = Funciones_Archivos.Menu_Instrumental()
         
-        if modo_u == "1":
+    
+        
+        if modo_u == '1':
+            Funciones_Archivos.limpiar_pantalla()
+            #Funciones_Archivos.limpiar_teclado()
+            set_u  = Funciones_Archivos.Menu_Instrumental()
             ruta_medicion_generador, ruta_medicion_CargayDescarga, ruta_archivo_config = Funciones_Archivos.Ruta_de_analisis_nuevo()
             Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time = Funciones_Archivos.Configuracion()
             estado_actual = "INICIALIZACION"
+
         
-        elif modo_u== "2":
+        elif modo_u== '2':
+            Funciones_Archivos.limpiar_pantalla()
+            #Funciones_Archivos.limpiar_teclado()
+            set_u  = Funciones_Archivos.Menu_Instrumental()
             ruta_medicion_generador, ruta_medicion_CargayDescarga, ruta_archivo_config, Archivo_Generador, Archivo_Capacitor, Archivo_Config = Funciones_Archivos.Ruta_de_analisis_existente()
             Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time = Funciones_Archivos.extraccion_datos(ruta_archivo_config)
             estado_actual = "EXTRACCION"
         
         else:
             Funciones_Archivos.limpiar_pantalla()
-            print("Opción incorrecta. Ingresá 1 o 2.")
+            print("Opción incorrecta")
             modo_u = Funciones_Archivos.Menu_Inicial()  
+            Funciones_Archivos.limpiar_pantalla()
+            Funciones_Archivos.limpiar_teclado()
             set_u  = Funciones_Archivos.Menu_Instrumental()
 
 ######################################################################################################################################################################################
@@ -97,7 +107,8 @@ while True:
         with HP3458A("GPIB0::22::INSTR") as dvm:
             Medicion_Capacitor=dvm.configurar_y_medir_sweep(Cant_Muestras, Sweep_time, Aper_Time)
         
-        Funciones_Archivos.Guardar_Medicion(ruta_medicion_CargayDescarga,Medicion_Capacitor)
+        #Funciones_Archivos.Guardar_Medicion(ruta_medicion_CargayDescarga,Medicion_Capacitor)
+        Funciones_Archivos.Guardar_Medicion_Config(ruta_medicion_CargayDescarga,Medicion_Capacitor,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
         
         estado_actual = "CALCULO"
 
