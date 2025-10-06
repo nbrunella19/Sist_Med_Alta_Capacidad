@@ -258,7 +258,7 @@ def Guardar_Medicion(Ruta_Guardado,Medicion_Realizada):
             for dato in Medicion_Realizada:
                 file.write(f"{dato}\n")  
 ###################################################################################################################
-def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada, 
+def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada,Ruta_Config, 
                      Modo=None,Vn_Cx=None, Vn_Rp=None, Vn_Tau=None, Frec=None, Sweep_time=None):
     # Guardar los datos de la medición en un archivo de texto
     with open(Ruta_Guardado, "w") as file:         
@@ -276,7 +276,7 @@ def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada,
             "Sweep_time": Sweep_time
         }
         
-        ruta_json = Path(Ruta_Guardado).with_suffix(".json")
+        ruta_json = Path(Ruta_Config).with_suffix(".json")
         with open(ruta_json, "w") as json_file:
             json.dump(parametros, json_file, indent=4)
 ###################################################################################################################

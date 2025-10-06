@@ -80,7 +80,7 @@ def analizar_senal_cuadrada(signal: np.ndarray, umbral: float = 0.01):
     return  V_max, Gen_std
 ################################################################################################
 
-def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablegenerador):
+def Procesamiento_CargayDescarga(Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablegenerador):
     """
     Procesa los datos de medición de un capacitor para calcular su valor y otros parámetros relacionados
     """
@@ -138,7 +138,7 @@ def Procesamiento_CargayDescarga(Ruta,Medicion_Capacitor,V_max,Sweep_Time,Rp,Rca
     Num_Muestras_de_Ciclo    =[0]*Cantidad_ciclos 
     Tiempo_Muestras_de_Ciclo =[0]*Cantidad_ciclos
 
-    Mediciones_leidas = pd.read_csv(Ruta, header=None, names=['Tensión'], sep='\s+', skiprows=13)
+    Mediciones_leidas = pd.read_csv(Medicion_Capacitor, header=None, names=['Tensión'], sep='\s+', skiprows=13)
     Cantidad_de_muestras= len(Mediciones_leidas)
     # Generar el vector de tiempo en función del `timer`
     Mediciones_leidas['Tiempo'] = np.arange(0, Cantidad_de_muestras * Sweep_Time, Sweep_Time)

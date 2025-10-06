@@ -42,24 +42,31 @@ while True:
         Funciones_Archivos.limpiar_pantalla()
         Funciones_Archivos.limpiar_teclado()
         modo_u = Funciones_Archivos.Menu_Inicial()
-        
-    
-        
+
+        # Opción 1: Nuevo análisis        
         if modo_u == '1':
+
             Funciones_Archivos.limpiar_pantalla()
-            #Funciones_Archivos.limpiar_teclado()
+            # Elijo instrumental
             set_u  = Funciones_Archivos.Menu_Instrumental()
-            ruta_medicion_generador, ruta_medicion_CargayDescarga, ruta_archivo_config = Funciones_Archivos.Ruta_de_analisis_nuevo()
+            
+            # Obtengo rutas y configuración
+            Ruta_medicion_generador, Ruta_medicion_CargayDescarga, ruta_archivo_config = Funciones_Archivos.Ruta_de_analisis_nuevo()
             Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time = Funciones_Archivos.Configuracion()
+            
             estado_actual = "INICIALIZACION"
 
-        
+        # Opción 2: Análisis existente 
         elif modo_u== '2':
             Funciones_Archivos.limpiar_pantalla()
-            #Funciones_Archivos.limpiar_teclado()
+            
+            # Elijo instrumental
             set_u  = Funciones_Archivos.Menu_Instrumental()
-            ruta_medicion_generador, ruta_medicion_CargayDescarga, ruta_archivo_config, Archivo_Generador, Archivo_Capacitor, Archivo_Config = Funciones_Archivos.Ruta_de_analisis_existente()
+            
+            # Obtengo rutas y configuración ya existentes
+            Ruta_medicion_generador, Ruta_medicion_CargayDescarga, ruta_archivo_config, Archivo_Generador, Archivo_Capacitor, Archivo_Config = Funciones_Archivos.Ruta_de_analisis_existente()
             Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time = Funciones_Archivos.extraccion_datos(ruta_archivo_config)
+            
             estado_actual = "EXTRACCION"
         
         else:
@@ -69,6 +76,7 @@ while True:
             Funciones_Archivos.limpiar_pantalla()
             Funciones_Archivos.limpiar_teclado()
             set_u  = Funciones_Archivos.Menu_Instrumental()
+    
 
 ######################################################################################################################################################################################
 ###################################################################### INICIALIZA GENERADOR DE TENSION ###############################################################################
@@ -92,7 +100,7 @@ while True:
         with HP3458A("GPIB0::22::INSTR") as dvm:
             Medicion_Generador=dvm.configurar_y_medir_sweep(Cant_Muestras, Sweep_time, Aper_Time)
         
-        Funciones_Archivos.Guardar_Medicion_Config(ruta_medicion_generador,Medicion_Generador,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
+        Funciones_Archivos.Guardar_Medicion_Config(Ruta_medicion_generador,Medicion_Generador,ruta_archivo_config,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
         
         input("Cambiar posición de llave para medir la tensión en el capacitor y presionar Enter")      
         
@@ -107,8 +115,8 @@ while True:
         with HP3458A("GPIB0::22::INSTR") as dvm:
             Medicion_Capacitor=dvm.configurar_y_medir_sweep(Cant_Muestras, Sweep_time, Aper_Time)
         
-        Funciones_Archivos.Guardar_Medicion(ruta_medicion_CargayDescarga,Medicion_Capacitor)
-        #Funciones_Archivos.Guardar_Medicion_Config(ruta_medicion_CargayDescarga,Medicion_Capacitor,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
+        Funciones_Archivos.Guardar_Medicion(Ruta_medicion_CargayDescarga,Medicion_Capacitor)
+        #Funciones_Archivos.Guardar_Medicion_Config(Ruta_medicion_CargayDescarga,Medicion_Capacitor,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
         
         estado_actual = "CALCULO"
 
@@ -120,8 +128,8 @@ while True:
         
         Funciones_Archivos.limpiar_pantalla()
         # Cargar datos en arrays
-        Medicion_Generador = np.loadtxt(ruta_medicion_generador)            # ajusta delimiter si hace falta
-        Medicion_Capacitor = np.loadtxt(ruta_medicion_CargayDescarga)
+        Medicion_Generador = np.loadtxt(Ruta_medicion_generador)            # ajusta delimiter si hace falta
+        Medicion_Capacitor = np.loadtxt(Ruta_medicion_CargayDescarga)
         
 
         print("Datos generador cargados:", Medicion_Generador.shape)
@@ -136,10 +144,9 @@ while True:
     elif estado_actual == "CALCULO":
         
         Funciones_Archivos.limpiar_pantalla()
-        V_max, Gen_std = Funciones_Medicion.analizar_senal_cuadrada(Medicion_Generador)
+        V_max, V_max_std = Funciones_Medicion.analizar_senal_cuadrada(Medicion_Generador)
         
-        Cx_vector,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig = Funciones_Medicion.Procesamiento_CargayDescarga(
-                                                                                                                                    ruta_medicion_CargayDescarga,
+        Cx_vector,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig = Funciones_Medicion.Procesamiento_CargayDescarga(                                                                                                                                    
                                                                                                                                     Medicion_Capacitor,
                                                                                                                                     V_max,
                                                                                                                                     Sweep_time,
@@ -149,7 +156,7 @@ while True:
         Cx         = Funciones_Medicion.Calculo_Valor_Medio(Cx_vector)
         ucx, ucxp  = Funciones_Medicion.Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp)
         
-        Funciones_Medicion.Mostrar_Resultados(Cx,ucx, ucxp, Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga)
+        Funciones_Medicion.Mostrar_Resultados(Cx,ucx, ucxp, Vn_Rp,Ruta_medicion_generador,Ruta_medicion_CargayDescarga)
         
         input("Presionar Enter para continuar") 
         Funciones_Archivos.limpiar_pantalla()
