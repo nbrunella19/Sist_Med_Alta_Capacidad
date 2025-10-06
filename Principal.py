@@ -107,8 +107,8 @@ while True:
         with HP3458A("GPIB0::22::INSTR") as dvm:
             Medicion_Capacitor=dvm.configurar_y_medir_sweep(Cant_Muestras, Sweep_time, Aper_Time)
         
-        #Funciones_Archivos.Guardar_Medicion(ruta_medicion_CargayDescarga,Medicion_Capacitor)
-        Funciones_Archivos.Guardar_Medicion_Config(ruta_medicion_CargayDescarga,Medicion_Capacitor,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
+        Funciones_Archivos.Guardar_Medicion(ruta_medicion_CargayDescarga,Medicion_Capacitor)
+        #Funciones_Archivos.Guardar_Medicion_Config(ruta_medicion_CargayDescarga,Medicion_Capacitor,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
         
         estado_actual = "CALCULO"
 

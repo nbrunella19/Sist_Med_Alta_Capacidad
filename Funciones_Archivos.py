@@ -160,13 +160,9 @@ def Menu_Instrumental():
     print("2. FRH")
     
     while True:
-        limpiar_teclado()
-        sleep(0.2)
-        limpiar_teclado()
-        opcion_generador = input("Introducir Set (1 o 2):").strip()
-        sleep(5)  # Pequeña pausa para evitar problemas de buffer
-        print(f"Opción seleccionada: {opcion_generador}")  # Depuración
-
+        #limpiar_teclado()
+        opcion_generador = input("Introducir Set (1 o 2):")
+        
         
         if opcion_generador == "1":
             opcion = "Set INTI"

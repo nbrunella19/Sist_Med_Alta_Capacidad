@@ -215,7 +215,7 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
     
     # Coeficientes de sensibilidad del modelo tau=-t/ln(1-Vdig/Vm)
     dtau_dt     = 1/np.log(1-V_dig/V_max)
-    dtau_dgamma = tau_promedio/(np.square(np.log(1-gamma)))*(1-gamma)
+    dtau_dgamma = -tau_promedio / ((1 - gamma) * np.square(np.log(1 - gamma))) # equivalente: -tau_promedio / ((1 - gamma) * (np.log(1 - gamma)**2))
 
     dgamma_dVDIG   = 1 / V_max
     dgamma_dVM     = V_dig / V_max**2
