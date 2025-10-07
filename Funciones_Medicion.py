@@ -78,11 +78,14 @@ def analizar_senal_cuadrada(signal: np.ndarray, umbral: float = 0.01):
         Gen_std=voff_std
         
     return  V_max, Gen_std
-################################################################################################
-
-def Procesamiento_CargayDescarga(Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablegenerador):
+###############################################################################################################################################################
+###############################################################################################################################################################
+def Procesamiento_CargayDescarga(Ruta_Medicion_Carga_Descarga,Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablegenerador):
     """
-    Procesa los datos de medición de un capacitor para calcular su valor y otros parámetros relacionados
+    Entrada: Ruta del archivo de medición, Vector de muestras, Valor máximo de tensión del generador, Tiempo entre muestras,
+              Valor de resistencia patrón, Resistencia del cable del generador.
+    Retorna: Vector de capacidades calculadas, vectores de parámetros de la linealización, cantidad de ciclos válidos,
+    Función: Procesa los datos de medición de tensión en la carga del capacitor para calcular su valor nominal y la incertidumbre asociada.
     """
     # Inicializa vectores de resultados
     Muestras_Filtradas   = []
@@ -127,6 +130,7 @@ def Procesamiento_CargayDescarga(Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablege
     
     Cantidad_inicios = len(muestrasdeinicio)
     Cantidad_finales = len(muestrasdefin)
+    
     #Si la cantidad de inicios y finales fuesen distintos tomaria el de menor valor 'n'
     Cantidad_ciclos  = min(len(muestrasdeinicio), len(muestrasdefin))
     #Tomo finalmente los primeros 'n' valores
@@ -138,9 +142,11 @@ def Procesamiento_CargayDescarga(Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablege
     Num_Muestras_de_Ciclo    =[0]*Cantidad_ciclos 
     Tiempo_Muestras_de_Ciclo =[0]*Cantidad_ciclos
 
-    Mediciones_leidas = pd.read_csv(Medicion_Capacitor, header=None, names=['Tensión'], sep='\s+', skiprows=13)
+    Mediciones_leidas = pd.read_csv(Ruta_Medicion_Carga_Descarga, header=None, names=['Tensión'], sep='\s+', skiprows=13)
+    
     Cantidad_de_muestras= len(Mediciones_leidas)
-    # Generar el vector de tiempo en función del `timer`
+    
+    # Genera el vector de tiempo en función del `timer`
     Mediciones_leidas['Tiempo'] = np.arange(0, Cantidad_de_muestras * Sweep_Time, Sweep_Time)
 
     for i in range(Cantidad_ciclos):
@@ -160,34 +166,56 @@ def Procesamiento_CargayDescarga(Medicion_Capacitor,V_max,Sweep_Time,Rp,Rcablege
         Muestras_de_Ciclo_Lin[Indice] = np.log(1 - (Muestras_Filtradas_aux['Tensión']-V_offset) / V_max)
 
         # Calcular la pendiente de la curva linealizada usando una regresión lineal
+        # slope esla inversa negativa de tau
+        # intercept es el valor de y cuando x=0
+        # r_value es el coeficiente de correlación
+        # p_value es el valor p para la hipótesis nula que la pendiente es cero
+        # std_err es la desviación estándar del error de la pendiente
+        # Acá se hace la REGRESION LINEAL
         slope, intercept, r_value, p_value, std_err= linregress(Muestras_Filtradas_aux['Tiempo'], Muestras_de_Ciclo_Lin[Indice])
+               
+        # Evalua si la medición es válida según el coeficiente de determinación R^2
         if (r_value)**2 > R_Cuadrado:
-            # Modificar el 0.999 a una variable de entrada modificable      
+
+            # Si es válida, almacena los resultados    
             slope_vector.append(slope)  
             intercept_vector.append(intercept)
             r_value_vector.append(r_value)
             p_value_vector.append(p_value)
             std_err_vector.append(std_err)
-            Indice=Indice+1
         
+    # Obtengo el número de ciclos válidos
+    Cantidad_ciclos_validos = len(slope_vector)   
+
     Numero_Muestras_Finales = [item for sublista in Numero_de_Muestras_Filtradas for item in sublista]
-    Muestras_Filtradas      = [elemento for sublista in Muestras_Filtradas for elemento in sublista]
-    Cantidad_ciclos_validos = len(slope_vector)
+    Muestras_Filtradas      = [elemento for sublista in  Muestras_Filtradas  for elemento in sublista]
 
 
+    # Creación del vector de capacidad sabiendo que: C = tau/R y tau = -1/slope  => C = -1/R*slope
     Cx=[0]*Cantidad_ciclos_validos
+
     for i in range(Cantidad_ciclos_validos):
         Cx[i] = (-1 / float((slope_vector[i]) * float(Rp+Rcablegenerador)))
 
+    #Devuelve los valores calculados para su análisis posterior
     return Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig
+
+##################################################################################################################################################################
 ##################################################################################################################################################################
 
 
 ##################################################################################################################################################################
-def Calculo_Valor_Medio(Cx_vector):
-    Cx_promedio        = np.mean(Cx_vector)
-    return Cx_promedio
+##################################################################################################################################################################
 
+def Calculo_Valor_Medio(Vector):
+    """
+    Entrada: Vector de datos.
+    Salida: Valor promedio del vector.
+    """   
+    Promedio = np.mean(Vector)
+    return Promedio
+
+##################################################################################################################################################################
 ##################################################################################################################################################################
 
 def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp):

@@ -51,7 +51,7 @@ while True:
             set_u  = Funciones_Archivos.Menu_Instrumental()
             
             # Obtengo rutas y configuración
-            Ruta_medicion_generador, Ruta_medicion_CargayDescarga, ruta_archivo_config = Funciones_Archivos.Ruta_de_analisis_nuevo()
+            Ruta_Medicion_Entrada, Ruta_Medicion_Carga_Descarga, ruta_archivo_config = Funciones_Archivos.Ruta_de_analisis_nuevo()
             Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time = Funciones_Archivos.Configuracion()
             
             estado_actual = "INICIALIZACION"
@@ -64,7 +64,7 @@ while True:
             set_u  = Funciones_Archivos.Menu_Instrumental()
             
             # Obtengo rutas y configuración ya existentes
-            Ruta_medicion_generador, Ruta_medicion_CargayDescarga, ruta_archivo_config, Archivo_Generador, Archivo_Capacitor, Archivo_Config = Funciones_Archivos.Ruta_de_analisis_existente()
+            Ruta_Medicion_Entrada, Ruta_Medicion_Carga_Descarga, ruta_archivo_config, Archivo_Generador, Archivo_Capacitor, Archivo_Config = Funciones_Archivos.Ruta_de_analisis_existente()
             Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time = Funciones_Archivos.extraccion_datos(ruta_archivo_config)
             
             estado_actual = "EXTRACCION"
@@ -100,7 +100,7 @@ while True:
         with HP3458A("GPIB0::22::INSTR") as dvm:
             Medicion_Generador=dvm.configurar_y_medir_sweep(Cant_Muestras, Sweep_time, Aper_Time)
         
-        Funciones_Archivos.Guardar_Medicion_Config(Ruta_medicion_generador,Medicion_Generador,ruta_archivo_config,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
+        Funciones_Archivos.Guardar_Medicion_Config(Ruta_Medicion_Entrada,Medicion_Generador,ruta_archivo_config,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
         
         input("Cambiar posición de llave para medir la tensión en el capacitor y presionar Enter")      
         
@@ -115,8 +115,8 @@ while True:
         with HP3458A("GPIB0::22::INSTR") as dvm:
             Medicion_Capacitor=dvm.configurar_y_medir_sweep(Cant_Muestras, Sweep_time, Aper_Time)
         
-        Funciones_Archivos.Guardar_Medicion(Ruta_medicion_CargayDescarga,Medicion_Capacitor)
-        #Funciones_Archivos.Guardar_Medicion_Config(Ruta_medicion_CargayDescarga,Medicion_Capacitor,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
+        Funciones_Archivos.Guardar_Medicion(Ruta_Medicion_Carga_Descarga,Medicion_Capacitor)
+        #Funciones_Archivos.Guardar_Medicion_Config(Ruta_Medicion_Carga_Descarga,Medicion_Capacitor,Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time)
         
         estado_actual = "CALCULO"
 
@@ -127,11 +127,12 @@ while True:
     elif estado_actual == "EXTRACCION": 
         
         Funciones_Archivos.limpiar_pantalla()
-        # Cargar datos en arrays
-        Medicion_Generador = np.loadtxt(Ruta_medicion_generador)            # ajusta delimiter si hace falta
-        Medicion_Capacitor = np.loadtxt(Ruta_medicion_CargayDescarga)
         
-
+        # Se transforman los archivos en formato txt a ndarrays
+        Medicion_Generador = np.loadtxt(Ruta_Medicion_Entrada)            
+        Medicion_Capacitor = np.loadtxt(Ruta_Medicion_Carga_Descarga)
+        
+        #Muestro por pantalla la cantidad de datos cargados
         print("Datos generador cargados:", Medicion_Generador.shape)
         print("Datos capacitor cargados:", Medicion_Capacitor.shape)
 
@@ -146,17 +147,18 @@ while True:
         Funciones_Archivos.limpiar_pantalla()
         V_max, V_max_std = Funciones_Medicion.analizar_senal_cuadrada(Medicion_Generador)
         
-        Cx_vector,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig = Funciones_Medicion.Procesamiento_CargayDescarga(                                                                                                                                    
+        Cx_vector,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig = Funciones_Medicion.Procesamiento_CargayDescarga(
+                                                                                                                                    Ruta_Medicion_Carga_Descarga,                                                                                                                                    
                                                                                                                                     Medicion_Capacitor,
                                                                                                                                     V_max,
                                                                                                                                     Sweep_time,
                                                                                                                                     Vn_Rp,
                                                                                                                                     Rcablegenerador)
         
-        Cx         = Funciones_Medicion.Calculo_Valor_Medio(Cx_vector)
+        Cx         = np.mean(Cx_vector)
         ucx, ucxp  = Funciones_Medicion.Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig,V_max,Vn_Cx,Vn_Rp)
         
-        Funciones_Medicion.Mostrar_Resultados(Cx,ucx, ucxp, Vn_Rp,Ruta_medicion_generador,Ruta_medicion_CargayDescarga)
+        Funciones_Medicion.Mostrar_Resultados(Cx,ucx, ucxp, Vn_Rp,Ruta_Medicion_Entrada,Ruta_Medicion_Carga_Descarga)
         
         input("Presionar Enter para continuar") 
         Funciones_Archivos.limpiar_pantalla()

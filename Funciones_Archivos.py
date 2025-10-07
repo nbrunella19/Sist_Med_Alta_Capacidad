@@ -182,7 +182,7 @@ def Menu_Instrumental():
 
 def Menu_Config():   
     
-    print("\n---_ Menú de Configuración ----\n")  
+    print("\n---- Menú de Configuración ----\n")  
       
     while True:
         Vn_capacitor   = input("Valor nominal del capacitor de transferencia (Cx) en microfarad: ")

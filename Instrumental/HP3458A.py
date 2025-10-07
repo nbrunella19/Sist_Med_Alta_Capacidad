@@ -61,16 +61,7 @@ class HP3458A:
         self.instrument.write(f"NPLC {nplc}")
         if self.verbose:
             print(f"[INFO] Medición configurada: {mode}, rango {range_val}, resolución {resolution}, NPLC {nplc}")
-    '''
-    def configure_measurement(self, mode="DCV", range_val=10, resolution=0.00001):
-        mode = mode.upper()
-        if mode == "DCV":      
-            self.instrument.write(f"DCV {range_val},{resolution}")
-        elif mode == "ACV":
-            self.instrument.write(f"ACV {range_val},{resolution}")
-        else:
-            raise ValueError(f"Modo de medición '{mode}' no soportado.")
-    '''
+
     def measure_once(self) -> float:
         self.instrument.write("INIT")
         self.instrument.write("*WAI")
@@ -97,9 +88,19 @@ class HP3458A:
         return [float(val) for val in data.strip().split(",") if val]
 
     def measure_sweep_binary(self, cant_muestras, sweep_time, aper_time) -> np.ndarray:
+        """
+        Entrada: La clase, Cantidad de muestras, Separación entre muestras, Tiempo de apertura.
+        Esta función configura el HP3458A para realizar una medición en modo sweep
+        y devuelve un array de numpy con las muestras obtenidas.
+        Salida: Vector con las muestras medidas.
+        """
+        # Configuración el tiempo de espera máximo.
         self.instrument.timeout = 30000
+
+        # Configuración del multímetro para medición en modo sweep
         self.instrument.write('TRIG HOLD')
         self.instrument.write('TARM HOLD')
+         #Se crea un comando con todas las configuraciones necesarias.
         cmd = (
             f"AZERO OFF; PRESET FAST; MEM FIFO; MFORMAT SINT; OFORMAT SINT; TBUFF OFF; DELAY 0; "
             f"TRIG HOLD; TARM HOLD; DISP OFF, SAMPLING; "
@@ -107,22 +108,35 @@ class HP3458A:
             f"TARM SYN; TRIG EXT; MATH OFF"
         )
         self.instrument.write(cmd)
+        
+        # Inicia la medición
         self.instrument.write("TARM")
         time.sleep(0.2)
         self.instrument.write("MEM:START?")
         raw_data = self.instrument.read_bytes(cant_muestras * 2)
+
+        # Procesamiento y formateo de los datos binarios recibidos
         muestras = struct.unpack(">" + "h" * cant_muestras, raw_data)
+
+        # Obtener el factor de escala
         escala = float(self.instrument.query("ISCALE?"))
 
-        ##
-        #muestras=np.flipud(muestras)  # Invertir el array para que los datos estén en el orden correcto
-        ##
+        # Devolver las muestras escaladas
         return np.asarray(muestras) * escala
 
     def measure_and_plot_sweep(self, cant_muestras, sweep_time, aper_time):
-        print("[INFO] Iniciando medición sweep...")
+        """
+        Entrada: La clase, Cantidad de muestras, Separación entre muestras, Tiempo de apertura.
+        Salida: Vector con las muestras medidas y gráfico de las mismas.
+        """
+        print("[INFO] Iniciando medición ...")
+
+        # Realizar la medición
         datos = self.measure_sweep_binary(cant_muestras, sweep_time, aper_time)
+        # Crear vector de tiempo
         tiempo = np.arange(cant_muestras) * sweep_time
+        
+        # Gráfico de los datos
         plt.figure(figsize=(10, 5))
         plt.plot(tiempo, datos)
         plt.title("Medición Sweep Binary del HP3458A")
@@ -130,13 +144,26 @@ class HP3458A:
         plt.ylabel("Voltaje (V)")
         plt.grid(True)
         plt.show()
+
         return datos
 
     def configurar_y_medir_sweep(self,Cant_Muestras, Sweep_time, Aper_Time):
-        """Ejecuta el flujo clásico: reset, identificación, configuración, medición y gráfico."""
+        """
+        Entrada: La clase, Cantidad de muestras, Separación entre muestras, Tiempo de apertura.
+        Salida: Vector con las muestras medidas.
+        """
+        # Siempre empezar con un reset
         self.reset()
         print("Identificación:", self.identify())
+        
+        # Configurar el multímetro para medir DCV con un rango de 10V y resolución de 0.00001V
         self.configure_measurement(mode="DCV", range_val=10, resolution=0.00001)
+        
+        # Realizar la medición, graficar y obtener los datos
         datos = self.measure_and_plot_sweep(Cant_Muestras, Sweep_time, Aper_Time)
+        
+        # Finalizar con un reset
         self.reset()
+
+        #Array de tuplas (tiempo, dato)
         return datos
