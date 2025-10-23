@@ -38,6 +38,7 @@ class HP3245A:
                 print(f"[INFO] Sweep time recomendado: {Sweep_Time} µs")
 
         # Parámetros de configuración
+        
         vpp_cha, offset_cha = 1, 0.5
         vpp_chb, offset_chb = 5, 2.5
 

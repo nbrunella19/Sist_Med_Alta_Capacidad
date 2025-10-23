@@ -41,15 +41,18 @@ def Menu_Inicial():
     while True:
             
             opcion = input("Introducir modo (1 o 2):")
-            if opcion != "1" and opcion != "2":
+            if opcion ==   '1' :
+                break
+                 
+            elif opcion == '2':
+                break
+            
+            else:
                 limpiar_pantalla()
                 print("--- Modo de aplicación ---\n") 
                 print("1. Medir y calibrar")
                 print("2. Calcular desde una medición ya existente")
-                    
-            else:
-                break
-        
+                      
     return opcion   
 #####################################################################################################################
 
@@ -155,12 +158,11 @@ def Ruta_de_analisis_nuevo():
 #####################################################################################################################
 def Menu_Instrumental():
     
-    print("Seleccionar Set de medición \n")
-    print("1. INTI")
-    print("2. FRH")
-    
     while True:
-        #limpiar_teclado()
+        print("Seleccionar Set de medición \n")
+        print("1. INTI")
+        print("2. FRH")
+        limpiar_teclado()
         opcion_generador = input("Introducir Set (1 o 2):")
         
         
@@ -172,14 +174,13 @@ def Menu_Instrumental():
             break  
         
         else:
-            #limpiar_pantalla()
             print("Seleccionar Set de medición")
             print("1. INTI")
             print("2. FRH")
         
     return opcion   
-#####################################################################################################################
 
+#####################################################################################################################
 def Menu_Config():   
     
     print("\n---- Menú de Configuración ----\n")  
@@ -199,14 +200,32 @@ def Menu_Config():
             break
         else:
             print("Eso no es un número válido.")   
+    
     Ciclos = 5
     tau_x_ciclo = 5
 
     return Vn_capacitor_int, Vn_resistencia_int,Ciclos, tau_x_ciclo
 
 #####################################################################################################################
+def Configuracion():
+        
+    limpiar_pantalla()
+        
+    Modo = Menu_Instrumental()
+        
+    limpiar_pantalla()
+        
+    #Configura parámetros de medición en función de los vallores ingresados
+    Vn_Cx, Vn_Rp, cantidad_de_ciclos, Tau_x_ciclo = Menu_Config()         
+        
+    limpiar_pantalla()
+                        
+    Vn_Tau, Frec, Sweep_time = Funciones_Medicion.Calculo_Ciclos(Vn_Cx,Vn_Rp,Tau_x_ciclo,cantidad_de_ciclos)              
+        
+    #limpiar_pantalla()
+        
+    return Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time    
 #####################################################################################################################
-
 def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
     print("\n--- Resumen de configuración ---\n") 
     print(f"Se utilizará el set de medición: {Modo}")
@@ -230,33 +249,13 @@ def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
             print("Ingreso incorrecto")
     
     return opcion
-###################################################################################################################
-
-def Configuracion():
-        
-    limpiar_pantalla()
-        
-    Modo = Menu_Instrumental()
-        
-    limpiar_pantalla()
-        
-    #Configura parámetros de medición en función de los vallores ingresados
-    Vn_Cx, Vn_Rp, Ciclos, Tau_x_ciclo = Menu_Config()         
-        
-    limpiar_pantalla()
-                        
-    Vn_Tau, Frec, Sweep_time = Funciones_Medicion.Calculo_Ciclos(Vn_Cx,Vn_Rp,Ciclos,Tau_x_ciclo, Funciones_Medicion.Cant_Muestras)              
-        
-    limpiar_pantalla()
-        
-    return Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time    
 
 ###################################################################################################################
-
 def Guardar_Medicion(Ruta_Guardado,Medicion_Realizada):
     with open(Ruta_Guardado, "w") as file:         
             for dato in Medicion_Realizada:
                 file.write(f"{dato}\n")  
+
 ###################################################################################################################
 def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada,Ruta_Config, 
                      Modo=None,Vn_Cx=None, Vn_Rp=None, Vn_Tau=None, Frec=None, Sweep_time=None):
@@ -280,7 +279,6 @@ def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada,Ruta_Config,
         with open(ruta_json, "w") as json_file:
             json.dump(parametros, json_file, indent=4)
 ###################################################################################################################
-
 def Menu_Final():
     
     limpiar_pantalla()

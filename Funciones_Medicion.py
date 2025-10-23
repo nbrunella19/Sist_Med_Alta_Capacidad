@@ -14,6 +14,7 @@ Extremo_de_ventana_inf = 0.3
 Extremo_de_ventana_sup = 0.7
 R_Cuadrado = 0.999
 Cant_Muestras = 10000
+cantidad_de_ciclos = 5
 
 ###############################################################################################
 # Datos de DVM HP3458 
@@ -37,11 +38,27 @@ RDVM              = 10e9+5e3+5e3
 
 ##################################  FUNCIONES GENERALES  ########################################
 
-def Calculo_Ciclos(Cx,Rp,Ciclos,tau_por_ciclo,Cant_Muestras):
-    tau                = (float(Cx)/1000000)*float(Rp)
-    periodo            = float(tau_por_ciclo*2*tau)
-    frec_recomendada   = str(round((1/periodo),1))
-    sweep_time         = periodo*Ciclos/Cant_Muestras
+def Calculo_Ciclos(Cx,Rp,tau_por_ciclo_on,cantidad_de_ciclos):
+    
+    tau = (float(Cx)/1000000)*float(Rp)
+    
+    periodo=2*tau_por_ciclo_on*tau
+
+    frec_recomendada=round((1/periodo),2)
+    
+    sweep_time= round((periodo*cantidad_de_ciclos/10000)*1000000,0)
+
+    if tau < 0.5:
+        if sweep_time < 20:
+            sweep_time = 20 
+            cantidad_de_ciclos=0.2/(tau*2*tau_por_ciclo_on)
+            print("El tiempo entre muestras es = ",(sweep_time))
+        
+        else:
+            sweep_time=sweep_time
+            print("El tiempo entre muestras es = ",(sweep_time)) 
+    
+
     return tau,frec_recomendada,sweep_time   
 #########################################################################################################
 

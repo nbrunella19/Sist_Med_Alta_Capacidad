@@ -1,0 +1,8 @@
+{
+    "Modo": "Set INTI",
+    "Vn_Cx": 1,
+    "Vn_Rp": 1000,
+    "Vn_Tau": 0.001,
+    "Frec": "100.0",
+    "Sweep_time": 5e-06
+}
