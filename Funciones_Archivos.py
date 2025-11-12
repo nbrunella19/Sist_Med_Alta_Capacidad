@@ -148,10 +148,10 @@ def Ruta_de_analisis_nuevo():
 
     # Ruta final del archivo de Medición
     ruta_medicion_generador = Carpeta_Mediciones_Generador / nombre_archivo
-    ruta_medicion_CargayDescarga = Carpeta_Mediciones_Carga / nombre_archivo_config
+    ruta_medicion_CargayDescarga = Carpeta_Mediciones_Carga / nombre_archivo
 
     # Ruta final del archivo de Configuración
-    ruta_medicion_Config = Carpeta_Mediciones_Config / nombre_archivo
+    ruta_medicion_Config = Carpeta_Mediciones_Config / nombre_archivo_config
  
     return str(ruta_medicion_generador), str(ruta_medicion_CargayDescarga), str(ruta_medicion_Config)
 
@@ -201,10 +201,9 @@ def Menu_Config():
         else:
             print("Eso no es un número válido.")   
     
-    Ciclos = 5
     tau_x_ciclo = 5
 
-    return Vn_capacitor_int, Vn_resistencia_int,Ciclos, tau_x_ciclo
+    return Vn_capacitor_int, Vn_resistencia_int, tau_x_ciclo
 
 #####################################################################################################################
 def Configuracion():
@@ -216,17 +215,19 @@ def Configuracion():
     limpiar_pantalla()
         
     #Configura parámetros de medición en función de los vallores ingresados
-    Vn_Cx, Vn_Rp, cantidad_de_ciclos, Tau_x_ciclo = Menu_Config()         
+    Vn_Cx, Vn_Rp, Tau_x_ciclo = Menu_Config()         
         
     limpiar_pantalla()
                         
-    Vn_Tau, Frec, Sweep_time = Funciones_Medicion.Calculo_Ciclos(Vn_Cx,Vn_Rp,Tau_x_ciclo,cantidad_de_ciclos)              
+    Vn_Tau, Frec, Sweep_time, Cantidad_Ciclos = Funciones_Medicion.Calculo_Ciclos(Vn_Cx,Vn_Rp,Tau_x_ciclo)              
         
-    #limpiar_pantalla()
+    limpiar_pantalla()
         
-    return Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time    
+    return Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time ,Cantidad_Ciclos   
 #####################################################################################################################
+
 def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
+    
     print("\n--- Resumen de configuración ---\n") 
     print(f"Se utilizará el set de medición: {Modo}")
     print(f"Capacitor incognita de valor nominal : {Vn_Cx} uF")
@@ -251,19 +252,38 @@ def Mostrar_Configuracion(Modo, Vn_Cx, Vn_Rp, Vn_Tau, Frec):
     return opcion
 
 ###################################################################################################################
+
+def Menu_Final():
+    """ Menú final después de la calibración """
+    limpiar_pantalla()
+    print("La calibración ha finalizado.")
+    while True: 
+            select_final = input("\nPresionar 1 para volver al menú principal o 2 para cerrar: ")  
+            limpiar_pantalla() 
+            if select_final == "1":
+                return "INICIO"
+            elif select_final == "2":
+                sys.exit()   
+            else:
+                limpiar_pantalla()
+                print("Elección incorrecta.")
+
+######################################################################################################################
+
 def Guardar_Medicion(Ruta_Guardado,Medicion_Realizada):
+    """
+    Guardar los datos de la medición en un archivo de texto
+    """
     with open(Ruta_Guardado, "w") as file:         
             for dato in Medicion_Realizada:
                 file.write(f"{dato}\n")  
 
 ###################################################################################################################
-def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada,Ruta_Config, 
-                     Modo=None,Vn_Cx=None, Vn_Rp=None, Vn_Tau=None, Frec=None, Sweep_time=None):
-    # Guardar los datos de la medición en un archivo de texto
-    with open(Ruta_Guardado, "w") as file:         
-        for dato in Medicion_Realizada:
-            file.write(f"{dato}\n")  
-    
+
+def Guardar_Medicion_Config(Ruta_Config, Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time):
+    """
+    Guardar los datos de la medición en un archivo de texto
+    """  
     # Si se pasaron los parámetros, guardarlos en un archivo JSON
     if None not in (Modo,Vn_Cx, Vn_Rp, Vn_Tau, Frec, Sweep_time):
         parametros = {
@@ -278,20 +298,6 @@ def Guardar_Medicion_Config(Ruta_Guardado, Medicion_Realizada,Ruta_Config,
         ruta_json = Path(Ruta_Config).with_suffix(".json")
         with open(ruta_json, "w") as json_file:
             json.dump(parametros, json_file, indent=4)
-###################################################################################################################
-def Menu_Final():
-    
-    limpiar_pantalla()
-    print("La calibración ha finalizado.")
-    while True: 
-            select_final = input("\nPresionar 1 para volver al menú principal o 2 para cerrar: ")  
-            limpiar_pantalla() 
-            if select_final == "1":
-                return "INICIO"
-            elif select_final == "2":
-                sys.exit()   
-            else:
-                limpiar_pantalla()
-                print("Elección incorrecta.")
 
 ###################################################################################################################
+

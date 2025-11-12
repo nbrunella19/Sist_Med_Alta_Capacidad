@@ -38,28 +38,30 @@ RDVM              = 10e9+5e3+5e3
 
 ##################################  FUNCIONES GENERALES  ########################################
 
-def Calculo_Ciclos(Cx,Rp,tau_por_ciclo_on,cantidad_de_ciclos):
+def Calculo_Ciclos(Cx,Rp,tau_por_ciclo_on,):
     
+    Cantidad_de_ciclos_default = 5
     tau = (float(Cx)/1000000)*float(Rp)
     
     periodo=2*tau_por_ciclo_on*tau
 
     frec_recomendada=round((1/periodo),2)
     
-    sweep_time= round((periodo*cantidad_de_ciclos/10000)*1000000,0)
+    sweep_time= round((periodo*Cantidad_de_ciclos_default/10000)*1000000,0)
 
     if tau < 0.5:
         if sweep_time < 20:
-            sweep_time = 20 
+            sweep_Time = 20 *1e-6
             cantidad_de_ciclos=0.2/(tau*2*tau_por_ciclo_on)
             print("El tiempo entre muestras es = ",(sweep_time))
         
         else:
-            sweep_time=sweep_time
+            sweep_Time=sweep_time*1e-6
+            cantidad_de_ciclos = Cantidad_de_ciclos_default
             print("El tiempo entre muestras es = ",(sweep_time)) 
     
 
-    return tau,frec_recomendada,sweep_time   
+    return tau,frec_recomendada,sweep_Time,cantidad_de_ciclos   
 #########################################################################################################
 
 def analizar_senal_cuadrada(signal: np.ndarray, umbral: float = 0.01):
@@ -297,9 +299,10 @@ def Calculo_Incertidumbre(Cx,slope_vector,intercept_vector,r_value_vector,std_er
 
 ##################################################################################################################################################################
 
-def Mostrar_Resultados(Cx_promedio,uc,uc_porcentual,Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga):
+def Mostrar_Resultados(Cx_promedio,uc,uc_porcentual,Vn_Rp,ruta_medicion_generador,ruta_medicion_CargayDescarga,ruta_medicion_Config):
     print(f"Archivo de Medición del Generador  :\n {ruta_medicion_generador}\n")
     print(f"Archivo de Medición del Multímetro :\n {ruta_medicion_CargayDescarga}\n")
+    print(f"Archivo de configuración :\n {ruta_medicion_Config}\n")
     print(f"Valor de resistencia nominal del patrón (Rp)      : {round(Vn_Rp,4)} ohm")
     print(f"Capacidad promedio (Cx)      : {round(Cx_promedio*1e6,6)} uF")
     print(f"Incertidumbre combinada      : {round(uc,7)} uF")
