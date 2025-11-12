@@ -35,7 +35,7 @@ class HP3245A:
 
         if self.verbose:
                 print(f"[INFO] Frecuencia recomendada: {Frec} Hz")
-                print(f"[INFO] Sweep time recomendado: {Sweep_Time} µs")
+                print(f"[INFO] Sweep time recomendado: {Sweep_Time} s")
 
         # Parámetros de configuración
         

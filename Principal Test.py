@@ -10,13 +10,15 @@ from pathlib import Path
 from scipy.stats import linregress
 from Instrumental.HP3458A import HP3458A
 from Instrumental.HP3245A import HP3245A
-
+from Instrumental.AFG1022 import TektronixAFG1022
+from Instrumental.KL2110 import Keithley2110
 
 ###################################################################################################################################################################################### 
 ####################################################################### VARIABLES GLOBALES ###########################################################################################
 ######################################################################################################################################################################################
 
-estado_actual  = "INICIO"
+#estado_actual  = "INICIO"
+estado_actual  = "FINALIZACION"
 Cant_Muestras  = 10000
 Aper_Time      = 3e-6
 Rcablegenerador  = 88e-3
@@ -81,7 +83,7 @@ while True: ######################################################## BUCLE PRINC
             modo_u = Funciones_Archivos.Menu_Inicial()  
             Funciones_Archivos.limpiar_pantalla()
             Funciones_Archivos.limpiar_teclado()
-            
+            #set_u  = Funciones_Archivos.Menu_Instrumental()
     
 
 ######################################################################################################################################################################################
@@ -153,7 +155,7 @@ while True: ######################################################## BUCLE PRINC
         
         Funciones_Archivos.limpiar_pantalla()
         V_max, V_max_std = Funciones_Medicion.analizar_senal_cuadrada(Medicion_Generador)
-
+        
         Cx_vector,slope_vector,intercept_vector,r_value_vector,std_err_vector,Cantidad_ciclos_validos,Cantidad_de_muestras,V_dig = Funciones_Medicion.Procesamiento_CargayDescarga(
                                                                                                                                     Ruta_Medicion_Carga_Descarga,                                                                                                                                    
                                                                                                                                     Medicion_Capacitor,

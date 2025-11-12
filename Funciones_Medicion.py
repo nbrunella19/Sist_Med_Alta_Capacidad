@@ -10,14 +10,14 @@ from scipy.stats import linregress
 from pathlib import Path
 
 #############################################################################################
-Extremo_de_ventana_inf = 0.3
-Extremo_de_ventana_sup = 0.7
-R_Cuadrado = 0.999
+Extremo_de_ventana_inf = 0.1
+Extremo_de_ventana_sup = 0.9
+R_Cuadrado    = 0.999
 Cant_Muestras = 10000
 cantidad_de_ciclos = 5
 
-###############################################################################################
-# Datos de DVM HP3458 
+################################## Datos de DVM HP3458 ###########################################
+
 HP3458_Accuracy_T   = 1e-4
 HP3458_Offset_T     = 5e-9
 HP3458_Resolu_T     = 1e-7
@@ -53,12 +53,12 @@ def Calculo_Ciclos(Cx,Rp,tau_por_ciclo_on,):
         if sweep_time < 20:
             sweep_Time = 20 *1e-6
             cantidad_de_ciclos=0.2/(tau*2*tau_por_ciclo_on)
-            print("El tiempo entre muestras es = ",(sweep_time))
+            print("El tiempo entre muestras es = ",(sweep_Time))
         
         else:
             sweep_Time=sweep_time*1e-6
             cantidad_de_ciclos = Cantidad_de_ciclos_default
-            print("El tiempo entre muestras es = ",(sweep_time)) 
+            print("El tiempo entre muestras es = ",(sweep_Time)) 
     
 
     return tau,frec_recomendada,sweep_Time,cantidad_de_ciclos   
@@ -106,33 +106,49 @@ def Procesamiento_CargayDescarga(Ruta_Medicion_Carga_Descarga,Medicion_Capacitor
     Retorna: Vector de capacidades calculadas, vectores de parámetros de la linealización, cantidad de ciclos válidos,
     Función: Procesa los datos de medición de tensión en la carga del capacitor para calcular su valor nominal y la incertidumbre asociada.
     """
+    
     # Inicializa vectores de resultados
-    Muestras_Filtradas   = []
-    Muestras_Validas     = []
-    muestrasdeinicio     = []  # Almacenará los números de muestra del inicio de carga
-    muestrasdefin        = []  # Almacenará los números de muestra del final de carga
-    Numero_de_Muestras_Filtradas =[]
-    V_offset            =  0.0
+    Muestras_Filtradas              = []  
+    muestrasdeinicio                = []  # Almacenará los números de muestra del inicio de cada carga
+    muestrasdefin                   = []  # Almacenará los números de muestra de final de cada carga
+    Numero_de_Muestras_Filtradas    = []
+    slope_vector                    = []   
+    intercept_vector                = []
+    r_value_vector                  = []
+    p_value_vector                  = []
+    std_err_vector                  = []
     
-    R_Cuadrado = 0.999
-    Indice     = 0
+    V_offset                        = 0.0 
+    R_Cuadrado                      = 0.999
+    Indice                          = 0  
+    cargando                        = False  # Bandera para identificar si estamos en una carga
+    enganche                        = False
     
-    cargando         = False  # Bandera para identificar si estamos en una carga
-    enganche         = False
-    
-    V_dig            = V_max* 0.6321205588
-    valor_inicial    = 0.01 * V_max 
+    V_dig            = V_max* 0.6321205588  
+    #valor_inicial    = 0.01 * V_max 
+    valor_inicial    = 0.1 * V_max 
     valor_final      = 0.99 * V_max  
     
-    slope_vector    =[]   
-    intercept_vector=[]
-    r_value_vector  =[]
-    p_value_vector  =[]
-    std_err_vector  =[]
-    Cx_vector       =[]  
+    print(f"Valor inicial de disparo: {valor_inicial} V")
+    print(f"Valor final de disparo: {valor_final} V")
 
-    for i, valor in enumerate(Medicion_Capacitor, start=1):   
-    # el enganche es como un trigger, es para sincronizar con el cero.  
+     
+    with open(Ruta_Medicion_Carga_Descarga, 'r') as f:
+        Mediciones = []
+        for linea in f:
+            try:
+                valor = float(linea.strip())
+                Mediciones.append(valor)
+            except ValueError:
+                # Si la línea no puede convertirse, la ignoramos (puede ser texto del encabezado)
+                continue
+    
+
+##############################################################################################################    
+ 
+    for i, valor in enumerate(Mediciones, start=1):   
+        
+        # Si no fue disparado, no está cargando y el valor es superior al mínimo disparo
         if not enganche and not cargando and valor <= valor_inicial:
             enganche = True
         # Una vez que se sincronizo con un cero analizo cuando sale del mismo.
@@ -146,12 +162,19 @@ def Procesamiento_CargayDescarga(Ruta_Medicion_Carga_Descarga,Medicion_Capacitor
             muestrasdefin.append(i)
             cargando = False
             enganche = False
-    
+
+############################################################################################################## 
+  
+    print(muestrasdeinicio)
+    print(muestrasdefin)
+    input()
+   
     Cantidad_inicios = len(muestrasdeinicio)
     Cantidad_finales = len(muestrasdefin)
     
     #Si la cantidad de inicios y finales fuesen distintos tomaria el de menor valor 'n'
-    Cantidad_ciclos  = min(len(muestrasdeinicio), len(muestrasdefin))
+    Cantidad_ciclos  = min(Cantidad_inicios, Cantidad_finales)
+    
     #Tomo finalmente los primeros 'n' valores
     muestrasdeinicio = muestrasdeinicio[:Cantidad_ciclos]
     muestrasdefin    = muestrasdefin[:Cantidad_ciclos]
@@ -159,12 +182,11 @@ def Procesamiento_CargayDescarga(Ruta_Medicion_Carga_Descarga,Medicion_Capacitor
     Muestras_de_Ciclo        =[0]*Cantidad_ciclos 
     Muestras_de_Ciclo_Lin    =[0]*Cantidad_ciclos 
     Num_Muestras_de_Ciclo    =[0]*Cantidad_ciclos 
-    Tiempo_Muestras_de_Ciclo =[0]*Cantidad_ciclos
+    #Tiempo_Muestras_de_Ciclo =[0]*Cantidad_ciclos
 
-    Mediciones_leidas = pd.read_csv(Ruta_Medicion_Carga_Descarga, header=None, names=['Tensión'], sep='\s+', skiprows=13)
-    
+    Mediciones_leidas = pd.read_csv(Ruta_Medicion_Carga_Descarga, header=None, names=['Tensión'], sep='\s+', skiprows=13)  
     Cantidad_de_muestras= len(Mediciones_leidas)
-    
+
     # Genera el vector de tiempo en función del `timer`
     Mediciones_leidas['Tiempo'] = np.arange(0, Cantidad_de_muestras * Sweep_Time, Sweep_Time)
 
